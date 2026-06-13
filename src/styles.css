@@ -1,0 +1,113 @@
+@import url('https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;0,7..72,700;1,7..72,400&family=Manrope:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  /* Colors */
+  --color-surface: #fbf9f5;
+  --color-surface-dim: #dbdad6;
+  --color-surface-bright: #fbf9f5;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f5f3ef;
+  --color-surface-container: #efeeea;
+  --color-surface-container-high: #eae8e4;
+  --color-surface-container-highest: #e4e2de;
+  --color-on-surface: #1b1c1a;
+  --color-on-surface-variant: #434842;
+  --color-inverse-surface: #30312e;
+  --color-inverse-on-surface: #f2f0ed;
+  --color-outline: #747871;
+  --color-outline-variant: #c3c8bf;
+  --color-surface-tint: #50634e;
+  --color-primary: #243624;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #3a4d39;
+  --color-on-primary-container: #a7bda4;
+  --color-inverse-primary: #b7cdb2;
+  --color-secondary: #526347;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #d4e9c5;
+  --color-on-secondary-container: #576a4d;
+  --color-tertiary: #2f332d;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #464943;
+  --color-on-tertiary-container: #b5b8b0;
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+  --color-primary-fixed: #d2e9ce;
+  --color-primary-fixed-dim: #b7cdb2;
+  --color-on-primary-fixed: #0e1f0f;
+  --color-on-primary-fixed-variant: #394b38;
+  --color-secondary-fixed: #d4e9c5;
+  --color-secondary-fixed-dim: #b9cdaa;
+  --color-on-secondary-fixed: #101f09;
+  --color-on-secondary-fixed-variant: #3a4c31;
+  --color-tertiary-fixed: #e1e3db;
+  --color-tertiary-fixed-dim: #c5c7c0;
+  --color-on-tertiary-fixed: #191d18;
+  --color-on-tertiary-fixed-variant: #444842;
+  --color-background: #fbf9f5;
+  --color-on-background: #1b1c1a;
+  --color-surface-variant: #e4e2de;
+
+  /* Typography */
+  --font-literata: 'Literata', Georgia, serif;
+  --font-manrope: 'Manrope', system-ui, sans-serif;
+  --font-sans: 'Manrope', system-ui, sans-serif;
+  --font-serif: 'Literata', Georgia, serif;
+  --font-family-literata: 'Literata', Georgia, serif;
+  --font-family-manrope: 'Manrope', system-ui, sans-serif;
+
+  /* Spacing (8px base unit) */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 40px;
+  --spacing-xxl: 64px;
+  --spacing-margin-mobile: 20px;
+  --spacing-margin-desktop: 80px;
+  --spacing-gutter: 24px;
+
+  /* Border radius */
+  --radius-sm: 0.25rem;
+  --radius-DEFAULT: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: #fbf9f5;
+  color: #1b1c1a;
+  font-family: 'Manrope', system-ui, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Literata', Georgia, serif;
+}
+
+.card-shadow {
+  box-shadow: 0 8px 40px 0 rgba(36, 54, 36, 0.06);
+}
+
+.hero-image {
+  background: linear-gradient(
+    to bottom,
+    rgba(36, 54, 36, 0.1) 0%,
+    rgba(36, 54, 36, 0.5) 100%
+  );
+}
