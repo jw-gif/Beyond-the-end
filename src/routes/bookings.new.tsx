@@ -7,6 +7,10 @@ import { Button } from '../components/ui/Button'
 import { Input, TextArea } from '../components/ui/Input'
 
 export const Route = createFileRoute('/bookings/new')({
+  validateSearch: (search: Record<string, unknown>) => ({
+    start: typeof search.start === 'string' ? search.start : undefined,
+    end: typeof search.end === 'string' ? search.end : undefined,
+  }),
   loader: async () => {
     const rates = await getRates()
     return { rates }
@@ -17,10 +21,11 @@ export const Route = createFileRoute('/bookings/new')({
 function BookingNew() {
   const { viewerTier, currentUser } = useTier()
   const { rates } = Route.useLoaderData()
+  const search = Route.useSearch()
   const navigate = useNavigate()
 
-  const [arrival, setArrival] = useState('')
-  const [departure, setDeparture] = useState('')
+  const [arrival, setArrival] = useState(search.start ?? '')
+  const [departure, setDeparture] = useState(search.end ?? '')
   const [guests, setGuests] = useState(2)
   const [hostNote, setHostNote] = useState('')
   const [submitted, setSubmitted] = useState(false)

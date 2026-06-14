@@ -113,6 +113,14 @@ export async function updateBookingStatus(id: string, status: Booking['status'])
   _bookings = _bookings.map(b => b.id === id ? { ...b, status } : b)
 }
 
+export async function updateBooking(id: string, updates: Partial<Omit<Booking, 'id' | 'created_at'>>): Promise<void> {
+  if (isSupabaseEnabled) {
+    await supabase!.from('bookings').update(updates).eq('id', id)
+    return
+  }
+  _bookings = _bookings.map(b => b.id === id ? { ...b, ...updates } : b)
+}
+
 // ---- Co-op Items ----
 export async function getCoopItems(): Promise<CoopItem[]> {
   if (isSupabaseEnabled) {
