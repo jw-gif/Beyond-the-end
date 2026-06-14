@@ -1,12 +1,38 @@
 import React, { createContext, useContext, useState } from 'react'
 import type { Tier, Profile } from '../types'
-import { profiles } from '../data/seed'
 
-// Demo sessions keyed by tier
+// Lightweight dev-session stubs — not stored in the DB, just for the tier switcher
 const DEMO_USERS: Record<Tier, Profile> = {
-  family: profiles[0],   // Julian Thorne
-  friends: profiles[2],  // David Miller
-  public: profiles[4],   // Local Guide Sarah
+  family: {
+    id: 'dev-family',
+    name: 'Family User',
+    email: 'family@cabin.local',
+    tier: 'family',
+    member_since: '2020-01-01',
+    emergency_contact_name: null,
+    emergency_contact_phone: null,
+    avatar_url: null,
+  },
+  friends: {
+    id: 'dev-friends',
+    name: 'Friends User',
+    email: 'friends@cabin.local',
+    tier: 'friends',
+    member_since: '2022-01-01',
+    emergency_contact_name: null,
+    emergency_contact_phone: null,
+    avatar_url: null,
+  },
+  public: {
+    id: 'dev-public',
+    name: 'Public Guest',
+    email: 'guest@cabin.local',
+    tier: 'public',
+    member_since: '2024-01-01',
+    emergency_contact_name: null,
+    emergency_contact_phone: null,
+    avatar_url: null,
+  },
 }
 
 interface TierContextValue {
