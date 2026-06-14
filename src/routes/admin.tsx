@@ -1,10 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
 import React, { useState, useMemo } from 'react'
 import { useTier } from '../lib/context/TierContext'
 import {
   getBookings, getProfiles, updateProfileTier,
   getRates, updateRate, addAdminBlock, getAdminBlocks, removeAdminBlock,
-  getProfile, getTotalNightsBooked, getCabinRevenue
+  getTotalNightsBooked, getCabinRevenue,
 } from '../lib/data/store'
 import { Card } from '../components/ui/Card'
 import { Chip, StatusBadge } from '../components/ui/Chip'
@@ -12,7 +12,20 @@ import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import type { Tier } from '../lib/types'
 
-export const Route = createFileRoute('/admin')({ component: AdminDashboard })
+export const Route = createFileRoute('/admin')({
+  loader: async () => {
+    const [bookings, profiles, rates, adminBlocks, totalNights, revenue] = await Promise.all([
+      getBookings(),
+      getProfiles(),
+      getRates(),
+      getAdminBlocks(),
+      getTotalNightsBooked(),
+      getCabinRevenue(),
+    ])
+    return { bookings, profiles, rates, adminBlocks, totalNights, revenue }
+  },
+  component: AdminDashboard,
+})
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 const DAYS = ['S','M','T','W','T','F','S']
@@ -33,13 +46,11 @@ function AdminDashboard() {
 }
 
 function AdminContent() {
-  const [bookings, setBookings] = useState(() => getBookings())
-  const [profiles, setProfiles] = useState(() => getProfiles())
-  const [rates, setRates] = useState(() => getRates())
-  const [adminBlocks, setAdminBlocks] = useState(() => getAdminBlocks())
+  const router = useRouter()
+  const { bookings, profiles, rates, adminBlocks, totalNights, revenue } = Route.useLoaderData()
 
-  const [publicRate, setPublicRate] = useState(() => rates.find(r => r.tier === 'public')?.nightly_rate ?? 250)
-  const [friendsRate, setFriendsRate] = useState(() => rates.find(r => r.tier === 'friends')?.nightly_rate ?? 150)
+  const [publicRate, setPublicRate] = useState(() => Number(rates.find(r => r.tier === 'public')?.nightly_rate ?? 250))
+  const [friendsRate, setFriendsRate] = useState(() => Number(rates.find(r => r.tier === 'friends')?.nightly_rate ?? 150))
   const [ratesSaved, setRatesSaved] = useState(false)
 
   const [calYear, setCalYear] = useState(2024)
@@ -55,33 +66,32 @@ function AdminContent() {
     .filter(b => b.end_date >= today && b.status !== 'cancelled')
     .sort((a, b) => a.start_date.localeCompare(b.start_date))
 
-  const totalNights = getTotalNightsBooked()
-  const revenue = getCabinRevenue()
-
-  function handleSaveRates() {
-    updateRate('public', publicRate)
-    updateRate('friends', friendsRate)
-    setRates([...getRates()])
+  async function handleSaveRates() {
+    await Promise.all([
+      updateRate('public', publicRate),
+      updateRate('friends', friendsRate),
+    ])
+    await router.invalidate()
     setRatesSaved(true)
     setTimeout(() => setRatesSaved(false), 2000)
   }
 
-  function handleTierChange(profileId: string, tier: Tier) {
-    updateProfileTier(profileId, tier)
-    setProfiles([...getProfiles()])
+  async function handleTierChange(profileId: string, tier: Tier) {
+    await updateProfileTier(profileId, tier)
+    await router.invalidate()
   }
 
-  function handleAddBlock(e: React.FormEvent) {
+  async function handleAddBlock(e: React.FormEvent) {
     e.preventDefault()
     if (!blockStart || !blockEnd) return
-    addAdminBlock({ start_date: blockStart, end_date: blockEnd, reason: blockReason || 'Admin Block' })
-    setAdminBlocks([...getAdminBlocks()])
+    await addAdminBlock({ start_date: blockStart, end_date: blockEnd, reason: blockReason || 'Admin Block' })
+    await router.invalidate()
     setBlockStart(''); setBlockEnd(''); setBlockReason('')
   }
 
-  function handleRemoveBlock(id: string) {
-    removeAdminBlock(id)
-    setAdminBlocks([...getAdminBlocks()])
+  async function handleRemoveBlock(id: string) {
+    await removeAdminBlock(id)
+    await router.invalidate()
   }
 
   const filteredProfiles = profiles.filter(p =>
@@ -139,12 +149,12 @@ function AdminContent() {
 
           <div className="space-y-3">
             {upcomingBookings.map(booking => {
-              const profile = getProfile(booking.profile_id)
+              const profile = profiles.find(p => p.id === booking.profile_id)
               const nights = Math.round(
                 (new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / 86400000
               )
               const rate = booking.tier_at_booking === 'family' ? 0
-                : rates.find(r => r.tier === booking.tier_at_booking)?.nightly_rate ?? 0
+                : Number(rates.find(r => r.tier === booking.tier_at_booking)?.nightly_rate ?? 0)
               const cost = nights * rate
 
               return (

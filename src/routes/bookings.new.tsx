@@ -1,25 +1,38 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import React, { useState, useMemo } from 'react'
 import { useTier } from '../lib/context/TierContext'
-import { getRateForTier, createBooking } from '../lib/data/store'
+import { getRates, createBooking } from '../lib/data/store'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Input, TextArea } from '../components/ui/Input'
 
-export const Route = createFileRoute('/bookings/new')({ component: BookingNew })
+export const Route = createFileRoute('/bookings/new')({
+  validateSearch: (search: Record<string, unknown>) => ({
+    start: typeof search.start === 'string' ? search.start : undefined,
+    end: typeof search.end === 'string' ? search.end : undefined,
+  }),
+  loader: async () => {
+    const rates = await getRates()
+    return { rates }
+  },
+  component: BookingNew,
+})
 
 function BookingNew() {
   const { viewerTier, currentUser } = useTier()
+  const { rates } = Route.useLoaderData()
+  const search = Route.useSearch()
   const navigate = useNavigate()
 
-  const [arrival, setArrival] = useState('')
-  const [departure, setDeparture] = useState('')
+  const [arrival, setArrival] = useState(search.start ?? '')
+  const [departure, setDeparture] = useState(search.end ?? '')
   const [guests, setGuests] = useState(2)
   const [hostNote, setHostNote] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
 
-  const nightlyRate = getRateForTier(viewerTier)
+  const nightlyRate = viewerTier === 'family' ? 0
+    : (rates.find(r => r.tier === viewerTier)?.nightly_rate ?? 0)
   const isFree = viewerTier === 'family' || viewerTier === 'friends'
 
   const nights = useMemo(() => {
@@ -29,15 +42,15 @@ function BookingNew() {
     return Math.round((e.getTime() - s.getTime()) / 86400000)
   }, [arrival, departure])
 
-  const total = isFree ? 0 : nights * nightlyRate
+  const total = isFree ? 0 : nights * Number(nightlyRate)
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!arrival || !departure) { setError('Please select arrival and departure dates.'); return }
     if (nights <= 0) { setError('Departure must be after arrival.'); return }
     setError('')
 
-    createBooking({
+    await createBooking({
       profile_id: currentUser.id,
       start_date: arrival,
       end_date: departure,
@@ -135,7 +148,7 @@ function BookingNew() {
                   value={viewerTier === 'family' ? 'Family & Friends' : viewerTier === 'friends' ? 'Family & Friends' : 'Public Guest'}
                 />
                 {!isFree && nights > 0 && (
-                  <PricingRow label={`${nights} nights × $${nightlyRate}`} value={`$${(nights * nightlyRate).toFixed(2)}`} />
+                  <PricingRow label={`${nights} nights × $${nightlyRate}`} value={`$${(nights * Number(nightlyRate)).toFixed(2)}`} />
                 )}
                 <hr className="border-outline-variant my-2" />
                 <div className="flex items-end justify-between">
