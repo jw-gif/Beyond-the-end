@@ -1,11 +1,20 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
 import React, { useState, useMemo } from 'react'
 import { useTier } from '../lib/context/TierContext'
-import { getBookings, getAdminBlocks } from '../lib/data/store'
-import { getProfile } from '../lib/data/store'
+import { getBookings, getAdminBlocks, getProfiles } from '../lib/data/store'
 import { Button } from '../components/ui/Button'
 
-export const Route = createFileRoute('/')({ component: CalendarHome })
+export const Route = createFileRoute('/')({
+  loader: async () => {
+    const [bookings, adminBlocks, profiles] = await Promise.all([
+      getBookings(),
+      getAdminBlocks(),
+      getProfiles(),
+    ])
+    return { bookings, adminBlocks, profiles }
+  },
+  component: CalendarHome,
+})
 
 type ViewMode = 'calendar' | 'upcoming'
 
@@ -17,12 +26,12 @@ const MONTHS = [
 
 function CalendarHome() {
   const { viewerTier, currentUser } = useTier()
+  const { bookings: allBookings, adminBlocks, profiles } = Route.useLoaderData()
   const [view, setView] = useState<ViewMode>('calendar')
   const [year, setYear] = useState(2024)
-  const [month, setMonth] = useState(9) // October 2024 (0-indexed)
+  const [month, setMonth] = useState(9)
 
-  const bookings = getBookings().filter(b => b.status !== 'cancelled')
-  const adminBlocks = getAdminBlocks()
+  const bookings = allBookings.filter(b => b.status !== 'cancelled')
 
   const dateMap = useMemo(() => {
     const map: Record<string, { type: 'your' | 'others' | 'block'; bookingId?: string; profileId?: string }> = {}
@@ -82,7 +91,7 @@ function CalendarHome() {
           key >= b.start_date && key <= b.end_date && b.profile_id === info.profileId
         )
         if (booking) {
-          const profile = getProfile(booking.profile_id)
+          const profile = profiles.find(p => p.id === booking.profile_id)
           return profile?.name.split(' ')[0] ?? 'Reserved'
         }
       }
@@ -216,7 +225,7 @@ function CalendarHome() {
               </div>
             )}
             {upcomingBookings.map(booking => {
-              const profile = getProfile(booking.profile_id)
+              const profile = profiles.find(p => p.id === booking.profile_id)
               const isYours = booking.profile_id === currentUser.id
               const showDetails = viewerTier === 'family' || isYours
               return (

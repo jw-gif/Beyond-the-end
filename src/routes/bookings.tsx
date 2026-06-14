@@ -1,18 +1,27 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
 import React, { useState } from 'react'
 import { useTier } from '../lib/context/TierContext'
-import { getBookingsByProfile, getMemoirsByProfile, getProfile, updateProfile } from '../lib/data/store'
+import { getBookings, getMemoirs, updateProfile } from '../lib/data/store'
 import { Card } from '../components/ui/Card'
 import { Chip, StatusBadge } from '../components/ui/Chip'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 
-export const Route = createFileRoute('/bookings')({ component: MyBookings })
+export const Route = createFileRoute('/bookings')({
+  loader: async () => {
+    const [bookings, memoirs] = await Promise.all([getBookings(), getMemoirs()])
+    return { bookings, memoirs }
+  },
+  component: MyBookings,
+})
 
 function MyBookings() {
+  const router = useRouter()
   const { currentUser, viewerTier } = useTier()
-  const bookings = getBookingsByProfile(currentUser.id)
-  const memoirs = getMemoirsByProfile(currentUser.id)
+  const { bookings: allBookings, memoirs: allMemoirs } = Route.useLoaderData()
+
+  const bookings = allBookings.filter(b => b.profile_id === currentUser.id)
+  const memoirs = allMemoirs.filter(m => m.profile_id === currentUser.id)
   const today = new Date().toISOString().split('T')[0]
   const upcoming = bookings.filter(b => b.end_date >= today && b.status !== 'cancelled')
   const past = bookings.filter(b => b.end_date < today || b.status === 'cancelled')
@@ -23,13 +32,14 @@ function MyBookings() {
   const [formEC, setFormEC] = useState(currentUser.emergency_contact_name ?? '')
   const [formPhone, setFormPhone] = useState(currentUser.emergency_contact_phone ?? '')
 
-  function handleSavePrefs() {
-    updateProfile(currentUser.id, {
+  async function handleSavePrefs() {
+    await updateProfile(currentUser.id, {
       name: formName,
       email: formEmail,
       emergency_contact_name: formEC || null,
       emergency_contact_phone: formPhone || null,
     })
+    await router.invalidate()
     setEditMode(false)
   }
 
